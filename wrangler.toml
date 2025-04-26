@@ -15,7 +15,8 @@ enabled = true
 
 # Secrets managed via Cloudflare Secrets Store
 secrets_store_secrets = [
-  { binding = "INTERNAL_SERVICE_KEY_SECRET", store_id = "<YOUR_STORE_ID>", secret_name = "D1_INTERNAL_SERVICE_KEY" }
+  # { binding = "INTERNAL_SERVICE_KEY_SECRET", store_id = "<YOUR_STORE_ID>", secret_name = "D1_INTERNAL_SERVICE_KEY" } # Remove or comment out if not needed
+  { binding = "INTERNAL_KEY_BINDING", store_id = "<YOUR_STORE_ID>", secret_name = "WEBHOOK_INTERNAL_KEY" } # <-- ADD THIS for internal auth
 ]
 
 # Remove old comments

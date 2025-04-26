@@ -1,232 +1,100 @@
-# D1 Worker
+# Home Assistant Worker
 
-A Cloudflare Worker service that provides a centralized database interface for other workers in the hoox trading system. This worker manages the D1 database operations and provides a secure API for data access.
-
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/yourusername/hoox-trading/tree/main/d1-worker)
+A Cloudflare Worker service that interacts with the Home Assistant REST API. This worker accepts requests via the standardized `/process` endpoint from the `webhook-receiver` or other authenticated internal services.
 
 ## Features
 
-- Centralized database operations
-- Secure API with authentication via internal service key
-- Support for single queries and batch operations
-- Error handling and logging
-- SQL injection prevention through parameterized queries
+- Calls Home Assistant services (e.g., `light.turn_on`, `script.turn_on`).
+- Secure authentication via shared internal key with `webhook-receiver`.
+- Uses Home Assistant Long-Lived Access Token for API calls.
 
 ## Prerequisites
 
 - Node.js >= 16
-- Bun (for package management)
+- Bun (or npm/yarn)
 - Wrangler CLI
-- Cloudflare Workers account with D1 database access
+- Cloudflare Workers account
+- Home Assistant instance accessible via URL.
+- Home Assistant Long-Lived Access Token.
 
 ## Setup
 
-1. Install dependencies:
-
-```bash
-bun install
-```
-
-2. Create a D1 database:
-
-```bash
-wrangler d1 create hoox-trading-db
-```
-
-3. Update the database_id in `wrangler.toml` with the ID from the previous command.
-
-4. Set your Cloudflare account ID in `wrangler.toml`:
-
-```toml
-name = "d1-worker"
-account_id = "your_account_id_here"
-main = "src/index.js"
-```
-
-5. Configure environment variables in `.dev.vars` for local development:
-
-```env
-INTERNAL_SERVICE_KEY=your_internal_key
-```
-
-6. Configure production secrets:
-
-```bash
-wrangler secret put INTERNAL_SERVICE_KEY
-```
+1.  Install dependencies:
+    ```bash
+    bun install
+    ```
+2.  Set your Cloudflare account ID in `wrangler.toml`.
+3.  Configure Secrets (via Cloudflare dashboard Secrets Store or `wrangler secret put`):
+    *   `WEBHOOK_INTERNAL_KEY`: The **shared** secret key used for authentication with the `webhook-receiver`. Bind this to `INTERNAL_KEY_BINDING` in `wrangler.toml`.
+    *   `HA_SECURE_URL`: The full base URL of your Home Assistant instance (e.g., `https://your-ha.duckdns.org`). Bind this to the `HA_SECURE_URL` *variable* (not secret binding) in `wrangler.toml` or use `wrangler secret put HA_SECURE_URL`.
+    *   `HA_TOKEN`: Your Home Assistant Long-Lived Access Token. Bind this to the `HA_TOKEN` *variable* or use `wrangler secret put HA_TOKEN`.
+4.  For local development, create a `.dev.vars` file and define the URLs and secrets:
+    ```.dev.vars
+    HA_SECURE_URL="https://your-local-or-remote-ha-url"
+    HA_TOKEN="your_ha_long_lived_token"
+    # Mock secret bindings for local dev:
+    INTERNAL_KEY_BINDING="your_shared_internal_secret"
+    ```
+    *(Note: For local dev, ensure the worker can reach your HA instance URL).* 
 
 ## Development
 
-### Local Development
-
-For local development, this worker should run on port 8787:
-
+Run locally (e.g., on port 8791):
 ```bash
-# Use a local D1 database for development
-bun run dev -- --port 8787 --local
-
-# Or connect to your actual Cloudflare D1 database (charges apply)
-bun run dev -- --port 8787
+bun run dev --port 8791
 ```
 
-The worker uses environment variables from `.dev.vars` during local development instead of the values in `wrangler.toml` or Cloudflare secrets.
-
-### Production Deployment
-
-Deploy to production:
-
+Deploy:
 ```bash
 bun run deploy
 ```
 
-## API Usage
+## API Interface
 
-### Single Query
+This worker **only** accepts requests from the `webhook-receiver` (or another authenticated internal service) on the `/process` endpoint.
 
-```http
-POST /query
-Content-Type: application/json
-X-Internal-Key: your_internal_key
-X-Request-ID: unique_request_id
-
-{
-  "query": "SELECT * FROM trade_requests WHERE id = ?",
-  "params": [123]
-}
-```
-
-#### Response Format (SELECT)
-
-```json
-{
-  "success": true,
-  "results": [
-    {
-      "id": 123,
-      "timestamp": "2024-03-26T12:00:00Z",
-      "method": "POST",
-      "path": "/trade"
-    }
-  ]
-}
-```
-
-#### Response Format (INSERT, UPDATE, DELETE)
-
-```json
-{
-  "success": true,
-  "lastRowId": 124,
-  "changes": 1
-}
-```
-
-### Batch Operations
-
-```http
-POST /batch
-Content-Type: application/json
-X-Internal-Key: your_internal_key
-X-Request-ID: unique_request_id
-
-{
-  "statements": [
-    {
-      "query": "INSERT INTO trade_requests (method, path) VALUES (?, ?)",
-      "params": ["POST", "/trade"]
-    },
-    {
-      "query": "UPDATE trade_responses SET error = ? WHERE request_id = ?",
-      "params": ["Connection timeout", 123]
-    }
-  ]
-}
-```
-
-#### Response Format (Batch)
-
-```json
-{
-  "success": true,
-  "results": [
-    {
-      "meta": {
-        "last_row_id": 124,
-        "changes": 1
-      }
-    },
-    {
-      "meta": {
-        "changes": 1
+- **Method:** `POST`
+- **Endpoint:** `/process`
+- **Content-Type:** `application/json`
+- **Expected Request Body:**
+  ```json
+  {
+    "requestId": "<uuid_from_receiver>",
+    "internalAuthKey": "YOUR_INTERNAL_SHARED_SECRET", // Validated against INTERNAL_KEY_BINDING
+    "payload": {
+      // --- Home Assistant specific payload fields below ---
+      "action": "light.turn_on",       // Required (HA service call, e.g., "light.turn_off", "script.turn_on")
+      "entity_id": "light.living_room", // Required (Target entity ID in HA)
+      "data": {                       // Optional (Service data, e.g., brightness, rgb_color)
+        "brightness": 128,
+        "rgb_color": [255, 0, 0]
       }
     }
-  ]
-}
-```
+  }
+  ```
 
-## Database Schema
+- **Response Format:**
 
-### Trade Requests Table
+  **Success:**
+  ```json
+  {
+    "success": true,
+    "result": [ /* Raw JSON response from HA API (often an array of state objects or empty) */ ],
+    "error": null
+  }
+  ```
 
-```sql
-CREATE TABLE trade_requests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    method TEXT NOT NULL,
-    path TEXT NOT NULL,
-    headers TEXT,
-    body TEXT,
-    source_ip TEXT,
-    user_agent TEXT
-);
-```
-
-### Trade Responses Table
-
-```sql
-CREATE TABLE trade_responses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    request_id INTEGER,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    status_code INTEGER,
-    headers TEXT,
-    body TEXT,
-    error TEXT,
-    execution_time_ms INTEGER,
-    FOREIGN KEY (request_id) REFERENCES trade_requests(id)
-);
-```
+  **Error:**
+  ```json
+  {
+    "success": false,
+    "result": null,
+    "error": "<Error message describing the failure (e.g., Authentication failed, Missing action in payload, Home Assistant API request failed: ...)>"
+  }
+  ```
 
 ## Security
 
-- All requests must include a valid X-Internal-Key header
-- All requests must include an X-Request-ID header
-- Parameterized queries to prevent SQL injection
-- Error messages don't expose database details
-
-## Error Handling
-
-The worker includes error handling for:
-
-- Authentication failures
-- Invalid SQL queries
-- Database connection issues
-- Parameter validation
-- Batch operation failures
-
-## Error Response Format
-
-```json
-{
-  "success": false,
-  "error": "Error message"
-}
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request
+- All requests *must* be received on the `/process` endpoint.
+- Requests *must* include a valid `internalAuthKey` in the body, matching the `WEBHOOK_INTERNAL_KEY` secret.
+- The Home Assistant URL and Token should be stored securely (e.g., via Cloudflare Secrets or environment variables in `wrangler.toml`).

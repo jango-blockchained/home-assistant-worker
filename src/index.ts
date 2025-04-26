@@ -3,53 +3,130 @@ import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { callHaService } from './haService';
 
-// Define types for environment variables (secrets)
+// Define types for Cloudflare Bindings
 export interface Env {
 	HA_SECURE_URL: string;
 	HA_TOKEN: string;
-	// Add other bindings if needed, e.g., KV namespaces, R2 buckets
+	INTERNAL_KEY_BINDING: {
+		get: () => Promise<string | null>; // Define structure for secret binding
+	};
+	// Add other bindings if needed
 }
 
-// Define the expected request body schema
-const haRequestSchema = z.object({
+// --- Schemas --- 
+
+// Schema for the specific HA task payload expected within the standardized request
+const haPayloadSchema = z.object({
 	action: z.enum([
 		'light.turn_on',
 		'light.turn_off',
-		'light.toggle', // Added toggle for convenience
-		'homeassistant.update_entity', // Generic way to set color/brightness
-		'automation.trigger', // To trigger automations/scripts directly if needed (can act as on/off)
-		'script.turn_on', // More specific way to turn on scripts/scenes
-		// Add other specific HA service calls as needed
+		'light.toggle',
+		'homeassistant.update_entity',
+		'automation.trigger',
+		'script.turn_on',
+		// Add other HA actions as needed
 	]),
 	entity_id: z.string().min(1),
-	data: z.record(z.unknown()).optional(), // Allow optional data like rgb_color, brightness
+	data: z.record(z.unknown()).optional(),
 });
+
+// Schema for the standardized incoming request from the webhook-receiver
+const standardizedRequestSchema = z.object({
+	requestId: z.string().uuid(),
+	internalAuthKey: z.string().min(1),
+	payload: haPayloadSchema, // Nested payload specific to this worker
+});
+
+// --- Hono App --- 
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.get('/', (c) => {
-	return c.text('Home Assistant Worker is running!');
+// --- Middleware for Internal Authentication --- 
+
+app.use('/process', async (c, next) => {
+	try {
+		const body = await c.req.json();
+		const internalAuthKey = body?.internalAuthKey;
+		const storedKey = await c.env.INTERNAL_KEY_BINDING?.get();
+
+		if (!storedKey) {
+			console.error('INTERNAL_KEY_BINDING secret is not configured on home-assistant-worker.');
+			return c.json({ success: false, error: 'Internal configuration error', result: null }, 500);
+		}
+
+		if (!internalAuthKey || internalAuthKey !== storedKey) {
+			console.warn(`Authentication failed for request ID: ${body?.requestId}`);
+			return c.json({ success: false, error: 'Authentication failed', result: null }, 403);
+		}
+
+		// Store the validated body in context to avoid re-parsing (optional but good practice)
+		c.set('validatedRequestBody', body); 
+		await next();
+	} catch (error) {
+		console.error('Error during authentication middleware:', error);
+		return c.json({ success: false, error: 'Invalid request format or internal error', result: null }, 400);
+	}
 });
 
-app.post('/service', zValidator('json', haRequestSchema), async (c) => {
-	const body = c.req.valid('json');
-	const env = c.env;
+// --- Main Processing Route --- 
 
-	try {
-		const [domain, service] = body.action.split('.');
-		const result = await callHaService(
-			env.HA_SECURE_URL,
-			env.HA_TOKEN,
-			domain,
-			service,
-			body.entity_id,
-			body.data
-		);
-		return c.json({ success: true, result });
-	} catch (error: any) {
-		console.error('Error calling Home Assistant:', error);
-		return c.json({ success: false, error: error.message || 'Failed to call Home Assistant service' }, 500);
+app.post(
+	'/process', 
+	zValidator('json', standardizedRequestSchema, (result, c) => {
+		// Custom error handler for Zod validation
+		if (!result.success) {
+			console.error('Standardized request validation failed:', result.error.issues);
+			return c.json(
+				{
+					success: false,
+					error: 'Invalid request body structure.',
+					details: result.error.issues, // Optionally include details
+					result: null,
+				},
+				400
+			);
+		}
+	}),
+	async (c) => {
+		// Retrieve the body validated by middleware AND Zod
+		// const body = c.req.valid('json'); // Use if not using context
+		const body = c.get('validatedRequestBody'); 
+
+		const { payload } = body; // Extract the HA-specific payload
+		const env = c.env;
+
+		console.log(`Processing HA request ID: ${body.requestId} for entity: ${payload.entity_id}`);
+
+		try {
+			const [domain, service] = payload.action.split('.');
+			const result = await callHaService(
+				env.HA_SECURE_URL,
+				env.HA_TOKEN,
+				domain,
+				service,
+				payload.entity_id,
+				payload.data
+			);
+			// Return standardized success response
+			return c.json({ success: true, result: result, error: null });
+		} catch (error: any) {
+			console.error(`Error calling Home Assistant for request ID ${body.requestId}:`, error);
+			// Return standardized error response
+			return c.json(
+				{
+					success: false,
+					error: error.message || 'Failed to call Home Assistant service',
+					result: null,
+				},
+				500 // Or potentially pass through status code from callHaService if available/relevant
+			);
+		}
 	}
+);
+
+// Keep a simple health check endpoint (optional)
+app.get('/', (c) => {
+	return c.text('Home Assistant Worker is running!');
 });
 
 export default app; 
