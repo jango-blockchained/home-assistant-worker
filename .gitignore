@@ -1,0 +1,23 @@
+# Dependencies
+node_modules
+.env
+
+# Cloudflare Workers
+.wrangler
+.dev.vars
+
+# Build
+dist
+worker
+build
+
+# Logs
+*.log
+npm-debug.log* 
+
+# Bun
+.bun/
+bun.lockb
+bun.lock
+
+.
