@@ -25,9 +25,9 @@ A Cloudflare Worker service that interacts with the Home Assistant REST API. Thi
     ```
 2.  Set your Cloudflare account ID in `wrangler.toml`.
 3.  Configure Secrets (via Cloudflare dashboard Secrets Store or `wrangler secret put`):
-    *   `WEBHOOK_INTERNAL_KEY`: The **shared** secret key used for authentication with the `webhook-receiver`. Bind this to `INTERNAL_KEY_BINDING` in `wrangler.toml`.
-    *   `HA_SECURE_URL`: The full base URL of your Home Assistant instance (e.g., `https://your-ha.duckdns.org`). Bind this to the `HA_SECURE_URL` *variable* (not secret binding) in `wrangler.toml` or use `wrangler secret put HA_SECURE_URL`.
-    *   `HA_TOKEN`: Your Home Assistant Long-Lived Access Token. Bind this to the `HA_TOKEN` *variable* or use `wrangler secret put HA_TOKEN`.
+    - `WEBHOOK_INTERNAL_KEY`: The **shared** secret key used for authentication with the `webhook-receiver`. Bind this to `INTERNAL_KEY_BINDING` in `wrangler.toml`.
+    - `HA_SECURE_URL`: The full base URL of your Home Assistant instance (e.g., `https://your-ha.duckdns.org`). Bind this to the `HA_SECURE_URL` _variable_ (not secret binding) in `wrangler.toml` or use `wrangler secret put HA_SECURE_URL`.
+    - `HA_TOKEN`: Your Home Assistant Long-Lived Access Token. Bind this to the `HA_TOKEN` _variable_ or use `wrangler secret put HA_TOKEN`.
 4.  For local development, create a `.dev.vars` file and define the URLs and secrets:
     ```.dev.vars
     HA_SECURE_URL="https://your-local-or-remote-ha-url"
@@ -35,16 +35,18 @@ A Cloudflare Worker service that interacts with the Home Assistant REST API. Thi
     # Mock secret bindings for local dev:
     INTERNAL_KEY_BINDING="your_shared_internal_secret"
     ```
-    *(Note: For local dev, ensure the worker can reach your HA instance URL).* 
+    _(Note: For local dev, ensure the worker can reach your HA instance URL)._
 
 ## Development
 
 Run locally (e.g., on port 8791):
+
 ```bash
 bun run dev --port 8791
 ```
 
 Deploy:
+
 ```bash
 bun run deploy
 ```
@@ -57,15 +59,17 @@ This worker **only** accepts requests from the `webhook-receiver` (or another au
 - **Endpoint:** `/process`
 - **Content-Type:** `application/json`
 - **Expected Request Body:**
+
   ```json
   {
     "requestId": "<uuid_from_receiver>",
     "internalAuthKey": "YOUR_INTERNAL_SHARED_SECRET", // Validated against INTERNAL_KEY_BINDING
     "payload": {
       // --- Home Assistant specific payload fields below ---
-      "action": "light.turn_on",       // Required (HA service call, e.g., "light.turn_off", "script.turn_on")
+      "action": "light.turn_on", // Required (HA service call, e.g., "light.turn_off", "script.turn_on")
       "entity_id": "light.living_room", // Required (Target entity ID in HA)
-      "data": {                       // Optional (Service data, e.g., brightness, rgb_color)
+      "data": {
+        // Optional (Service data, e.g., brightness, rgb_color)
         "brightness": 128,
         "rgb_color": [255, 0, 0]
       }
@@ -76,15 +80,19 @@ This worker **only** accepts requests from the `webhook-receiver` (or another au
 - **Response Format:**
 
   **Success:**
+
   ```json
   {
     "success": true,
-    "result": [ /* Raw JSON response from HA API (often an array of state objects or empty) */ ],
+    "result": [
+      /* Raw JSON response from HA API (often an array of state objects or empty) */
+    ],
     "error": null
   }
   ```
 
   **Error:**
+
   ```json
   {
     "success": false,
@@ -95,6 +103,6 @@ This worker **only** accepts requests from the `webhook-receiver` (or another au
 
 ## Security
 
-- All requests *must* be received on the `/process` endpoint.
-- Requests *must* include a valid `internalAuthKey` in the body, matching the `WEBHOOK_INTERNAL_KEY` secret.
+- All requests _must_ be received on the `/process` endpoint.
+- Requests _must_ include a valid `internalAuthKey` in the body, matching the `WEBHOOK_INTERNAL_KEY` secret.
 - The Home Assistant URL and Token should be stored securely (e.g., via Cloudflare Secrets or environment variables in `wrangler.toml`).
