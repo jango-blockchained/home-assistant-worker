@@ -129,7 +129,8 @@ app.post(
       );
       // Return standardized success response
       return c.json({ success: true, result: result, error: null });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error || "Failed to call Home Assistant service");
       console.error(
         `Error calling Home Assistant for request ID ${body.requestId}:`,
         error
@@ -138,7 +139,7 @@ app.post(
       return c.json(
         {
           success: false,
-          error: error.message || "Failed to call Home Assistant service",
+          error: errorMsg,
           result: null,
         },
         500 // Or potentially pass through status code from callHaService if available/relevant
