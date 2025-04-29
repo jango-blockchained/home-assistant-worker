@@ -3,7 +3,8 @@ import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { callHaService } from "./haService";
 import type { KVNamespace } from "@cloudflare/workers-types";
-import { kvTimestampMiddleware, type EnvWithKV } from "../../src/utils/kvUtils"; // Import shared middleware and Env type
+import { kvTimestampMiddleware, type EnvWithKV } from "../../../src/utils/kvUtils"; // Import shared middleware and Env type
+import { type Context } from 'hono'; // Import Hono context type
 
 // Define types for Cloudflare Bindings
 // Use EnvWithKV to ensure CONFIG_KV is present
@@ -91,29 +92,8 @@ app.use("/process", async (c, next) => {
   }
 });
 
-// --- Main Processing Route ---
-
-app.post(
-  "/process",
-  zValidator("json", standardizedRequestSchema, (result, c) => {
-    // Custom error handler for Zod validation
-    if (!result.success) {
-      console.error(
-        "Standardized request validation failed:",
-        result.error.issues
-      );
-      return c.json(
-        {
-          success: false,
-          error: "Invalid request body structure.",
-          details: result.error.issues, // Optionally include details
-          result: null,
-        },
-        400
-      );
-    }
-  }),
-  async (c) => {
+// --- Main Processing Logic (Exported Function) ---
+export async function processHaRequest(c: Context<{ Bindings: Env }>): Promise<Response> {
     // Retrieve the body validated by middleware AND Zod
     // const body = c.req.valid('json'); // Use if not using context
     const body = c.get("validatedRequestBody");
@@ -153,7 +133,34 @@ app.post(
         500 // Or potentially pass through status code from callHaService if available/relevant
       );
     }
-  }
+}
+
+// --- Hono Route Definition ---
+app.post(
+  "/process",
+  zValidator("json", standardizedRequestSchema, (result, c) => {
+    // Custom error handler for Zod validation
+    if (!result.success) {
+      console.error(
+        "Standardized request validation failed:",
+        result.error.issues
+      );
+      return c.json(
+        {
+          success: false,
+          error: "Invalid request body structure.",
+          details: result.error.issues, // Optionally include details
+          result: null,
+        },
+        400
+      );
+    }
+    // IMPORTANT: If auth middleware stores the body, validation needs it.
+    // If validation runs first, it should put the validated data in context.
+    // Let's assume auth runs first and puts raw body in c.get("validatedRequestBody")
+    // The zValidator hook here might need adjustment depending on exact middleware order
+  }),
+  processHaRequest // Use the exported handler function
 );
 
 // Keep a simple health check endpoint (optional)
