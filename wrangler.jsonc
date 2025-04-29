@@ -1,0 +1,28 @@
+{
+  "name": "home-assistant-worker",
+  "account_id": "profile", // Assuming this is correct, keep if needed or remove if default
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-07", // Standardized
+  "compatibility_flags": ["nodejs_compat"], // Standardized
+  "observability": { // Standardized
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    // Secrets must be created via `wrangler secret put`
+    // The values here are placeholders and will be populated from secrets
+    "HA_SECURE_URL": null,
+    "HA_TOKEN": null,
+    "INTERNAL_KEY_BINDING": null // This was previously fetched from secrets_store_secrets
+  },
+  // Note: Removed secrets_store_secrets definition. Secrets are now declared in vars and expected via `wrangler secret put`.
+  // Note: Removed commented-out D1 bindings.
+  // Note: Removed commented-out routes.
+  "kv_namespaces": [
+    {
+      "binding": "CONFIG_KV",
+      "id": "c5917667a21745e390ff969f32b1847d"
+      // "preview_id": "<YOUR_PREVIEW_ID>" // Add preview ID for local dev/testing
+    }
+  ]
+} 
