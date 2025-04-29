@@ -12,7 +12,6 @@
     "test:coverage": "bun test --coverage"
   },
   "dependencies": {
-    // "@cloudflare/workers-types": "^4.20240620.0",
     "@hono/zod-validator": "^0.2.2",
     "hono": "^4.4.8",
     "zod": "^3.23.8"

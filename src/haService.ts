@@ -16,7 +16,7 @@ export async function callHaService(
   service: string,
   entityId: string,
   data?: Record<string, unknown>
-): Promise<any> {
+): Promise<unknown> {
   const url = `${haUrl.replace(/\/$/, "")}/api/services/${domain}/${service}`;
 
   console.log(`Calling HA Service: POST ${url}`);
