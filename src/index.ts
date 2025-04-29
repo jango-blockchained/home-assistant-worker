@@ -2,9 +2,11 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { callHaService } from "./haService";
+import type { KVNamespace } from "@cloudflare/workers-types";
 
 // Define types for Cloudflare Bindings
 export interface Env {
+  CONFIG_KV: KVNamespace;
   HA_SECURE_URL: string;
   HA_TOKEN: string;
   INTERNAL_KEY_BINDING: {
@@ -40,6 +42,21 @@ const standardizedRequestSchema = z.object({
 // --- Hono App ---
 
 const app = new Hono<{ Bindings: Env }>();
+
+// --- Middleware for KV Interaction (Example) ---
+app.use("*", async (c, next) => {
+  try {
+    const lastRequest = await c.env.CONFIG_KV.get("last_request_timestamp");
+    console.log("KV: Last request timestamp:", lastRequest || "Not found");
+    await c.env.CONFIG_KV.put("last_request_timestamp", new Date().toISOString());
+    console.log("KV: Updated last_request_timestamp.");
+  } catch (kvError) {
+    console.error("KV Error during middleware:", kvError);
+    // Decide if KV error should block the request or just be logged
+    // In this example, we just log and continue
+  }
+  await next();
+});
 
 // --- Middleware for Internal Authentication ---
 
