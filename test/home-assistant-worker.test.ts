@@ -4,7 +4,7 @@ import app, { processHaRequest, type Env } from "../src/index"; // Import handle
 import { callHaService } from "../src/haService";
 // import { Env } from "../src/index"; // Already imported above
 import { mock } from "bun:test"; // Import Bun's mock function
-import { type Context } from 'hono'; // Import Context type
+import { type Context } from "hono"; // Import Context type
 
 // Mock the haService module using bun:test mock
 mock.module("../src/haService", () => ({
@@ -13,29 +13,45 @@ mock.module("../src/haService", () => ({
 
 // Mock the zValidator middleware (might not be strictly needed if bypassing app.fetch, but keep for now)
 mock.module("@hono/zod-validator", () => ({
-    zValidator: jest.fn(() => async (c, next) => await next()) // Simple passthrough middleware
+  zValidator: jest.fn(() => async (c, next) => await next()), // Simple passthrough middleware
 }));
-
 
 // Get a reference to the mocked function
 const mockCallHaService = callHaService as jest.Mock;
 
 // --- Helper to create Mock Context ---
-const createMockContext = (env: Env, requestBody: any): Context<{ Bindings: Env }> => ({
+const createMockContext = (
+  env: Env,
+  requestBody: any
+): Context<{ Bindings: Env }> =>
+  ({
     env: env,
-    req: { /* mock basic req properties if needed, e.g., url */ } as any,
-    json: jest.fn((data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' }})),
-    text: jest.fn((data, status = 200) => new Response(data, { status, headers: { 'Content-Type': 'text/plain' }})),
+    req: {
+      /* mock basic req properties if needed, e.g., url */
+    } as any,
+    json: jest.fn(
+      (data, status = 200) =>
+        new Response(JSON.stringify(data), {
+          status,
+          headers: { "Content-Type": "application/json" },
+        })
+    ),
+    text: jest.fn(
+      (data, status = 200) =>
+        new Response(data, {
+          status,
+          headers: { "Content-Type": "text/plain" },
+        })
+    ),
     get: jest.fn((key) => {
-        if (key === 'validatedRequestBody') {
-            return requestBody;
-        }
-        return undefined;
+      if (key === "validatedRequestBody") {
+        return requestBody;
+      }
+      return undefined;
     }),
     set: jest.fn(),
     // Add other context methods/properties if the handler uses them
-} as any);
-
+  }) as any;
 
 describe("Home Assistant Worker", () => {
   const TEST_INTERNAL_KEY = "test-internal-ha-key";
@@ -48,7 +64,13 @@ describe("Home Assistant Worker", () => {
     HA_SECURE_URL: secrets.HA_SECURE_URL ?? TEST_HA_URL,
     HA_TOKEN: secrets.HA_TOKEN ?? TEST_HA_TOKEN,
     INTERNAL_KEY_BINDING: {
-      get: jest.fn().mockResolvedValue(secrets.INTERNAL_KEY_BINDING?.get ? secrets.INTERNAL_KEY_BINDING.get() : TEST_INTERNAL_KEY),
+      get: jest
+        .fn()
+        .mockResolvedValue(
+          secrets.INTERNAL_KEY_BINDING?.get
+            ? secrets.INTERNAL_KEY_BINDING.get()
+            : TEST_INTERNAL_KEY
+        ),
     },
     // Add mock for CONFIG_KV used by middleware
     CONFIG_KV: {
@@ -66,7 +88,10 @@ describe("Home Assistant Worker", () => {
     jest.clearAllMocks();
     mockEnv = createMockEnv();
     // Reset HA service mock behavior
-    mockCallHaService.mockResolvedValue({ success: true, details: "mock success" });
+    mockCallHaService.mockResolvedValue({
+      success: true,
+      details: "mock success",
+    });
   });
 
   // --- Authentication Tests ---
@@ -167,8 +192,8 @@ describe("Home Assistant Worker", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(invalidPayload),
     });
-    const response = await app.fetch(request, mockEnv); 
-    expect(response.status).toBe(400); 
+    const response = await app.fetch(request, mockEnv);
+    expect(response.status).toBe(400);
     const body = await response.json();
     expect(body.error).toBe("Invalid request body structure.");
     expect(mockCallHaService).not.toHaveBeenCalled();
@@ -209,10 +234,10 @@ describe("Home Assistant Worker", () => {
       },
     };
     // Create mock context with the payload that auth middleware would set
-    const mockContext = createMockContext(mockEnv, validPayload); 
+    const mockContext = createMockContext(mockEnv, validPayload);
 
     const response = await processHaRequest(mockContext);
-    
+
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.success).toBe(true);
@@ -241,7 +266,7 @@ describe("Home Assistant Worker", () => {
         // No extra data needed for trigger usually
       },
     };
-    const mockContext = createMockContext(mockEnv, validPayload); 
+    const mockContext = createMockContext(mockEnv, validPayload);
 
     const response = await processHaRequest(mockContext);
 
@@ -286,16 +311,16 @@ describe("Home Assistant Worker", () => {
 
     expect(mockCallHaService).toHaveBeenCalledTimes(1);
     expect(mockCallHaService).toHaveBeenCalledWith(
-        TEST_HA_URL,
-        TEST_HA_TOKEN,
-        "light",
-        "turn_off",
-        "light.office",
-        undefined
-      );
+      TEST_HA_URL,
+      TEST_HA_TOKEN,
+      "light",
+      "turn_off",
+      "light.office",
+      undefined
+    );
   });
 
-   test("handles non-JSON or empty response from callHaService", async () => {
+  test("handles non-JSON or empty response from callHaService", async () => {
     // Simulate callHaService resolving successfully but with non-JSON/empty body
     // (The actual haService handles this, returning { success: true })
     mockCallHaService.mockResolvedValue({ success: true });
@@ -311,7 +336,7 @@ describe("Home Assistant Worker", () => {
     const mockContext = createMockContext(mockEnv, validPayload);
 
     const response = await processHaRequest(mockContext);
-    
+
     expect(response.status).toBe(200); // Status should be OK as handler returns success
     const body = await response.json();
     expect(body.success).toBe(true);
@@ -332,5 +357,4 @@ describe("Home Assistant Worker", () => {
     const text = await response.text();
     expect(text).toBe("Home Assistant Worker is running!");
   });
-
 });

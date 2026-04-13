@@ -1,9 +1,9 @@
 import { describe, expect, test, beforeEach, mock } from "bun:test";
 
 // Mock the module containing the function we want to test
-mock.module('../src/haService', () => {
+mock.module("../src/haService", () => {
   return {
-    callHaService: mock(() => Promise.resolve({ mock: true })) // Default mock implementation
+    callHaService: mock(() => Promise.resolve({ mock: true })), // Default mock implementation
   };
 });
 
@@ -11,7 +11,7 @@ mock.module('../src/haService', () => {
 import { callHaService } from "../src/haService";
 
 // Cast the imported function to its mock type for easier use
-const mockCallHaService = callHaService as unknown as ReturnType<typeof mock>; 
+const mockCallHaService = callHaService as unknown as ReturnType<typeof mock>;
 
 describe("Home Assistant Service Client (haService)", () => {
   const TEST_HA_URL = "http://mock-ha.local:8123";
@@ -54,7 +54,7 @@ describe("Home Assistant Service Client (haService)", () => {
 
   test("should handle non-JSON or empty successful response from underlying logic", async () => {
     // For this test, we assume the *underlying* logic (which we mocked) would return this
-    const successResponse = { success: true }; 
+    const successResponse = { success: true };
     mockCallHaService.mockResolvedValueOnce(successResponse);
 
     const result = await callHaService(
@@ -99,7 +99,7 @@ describe("Home Assistant Service Client (haService)", () => {
 
     expect(mockCallHaService).toHaveBeenCalledTimes(1);
     // Expect call WITHOUT the data argument
-     expect(mockCallHaService).toHaveBeenCalledWith(
+    expect(mockCallHaService).toHaveBeenCalledWith(
       TEST_HA_URL,
       TEST_HA_TOKEN,
       TEST_DOMAIN,
@@ -109,7 +109,7 @@ describe("Home Assistant Service Client (haService)", () => {
     );
   });
 
-   test("should propagate error for network issues from underlying logic", async () => {
+  test("should propagate error for network issues from underlying logic", async () => {
     const networkError = new Error("Network connection failed");
     mockCallHaService.mockRejectedValueOnce(networkError);
 
@@ -144,13 +144,12 @@ describe("Home Assistant Service Client (haService)", () => {
     // The original function handles removing it before fetch, but we test the call to our function
     // Expect call WITHOUT the data argument
     expect(mockCallHaService).toHaveBeenCalledWith(
-       `${TEST_HA_URL}/`, // Expect the trailing slash here in the call
-       TEST_HA_TOKEN,
-       TEST_DOMAIN,
-       TEST_SERVICE,
-       TEST_ENTITY_ID
-       // No undefined needed here if the function signature handles optional args
+      `${TEST_HA_URL}/`, // Expect the trailing slash here in the call
+      TEST_HA_TOKEN,
+      TEST_DOMAIN,
+      TEST_SERVICE,
+      TEST_ENTITY_ID
+      // No undefined needed here if the function signature handles optional args
     );
   });
-
-}); 
+});

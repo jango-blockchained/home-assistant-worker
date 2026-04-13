@@ -3,8 +3,11 @@ import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { callHaService } from "./haService";
 import type { KVNamespace } from "@cloudflare/workers-types";
-import { kvTimestampMiddleware, type EnvWithKV } from "../../../src/utils/kvUtils"; // Import shared middleware and Env type
-import { type Context } from 'hono'; // Import Hono context type
+import {
+  kvTimestampMiddleware,
+  type EnvWithKV,
+} from "../../../src/utils/kvUtils"; // Import shared middleware and Env type
+import { type Context } from "hono"; // Import Hono context type
 
 // Define types for Cloudflare Bindings
 // Use EnvWithKV to ensure CONFIG_KV is present
@@ -93,46 +96,51 @@ app.use("/process", async (c, next) => {
 });
 
 // --- Main Processing Logic (Exported Function) ---
-export async function processHaRequest(c: Context<{ Bindings: Env }>): Promise<Response> {
-    // Retrieve the body validated by middleware AND Zod
-    // const body = c.req.valid('json'); // Use if not using context
-    const body = c.get("validatedRequestBody");
+export async function processHaRequest(
+  c: Context<{ Bindings: Env }>
+): Promise<Response> {
+  // Retrieve the body validated by middleware AND Zod
+  // const body = c.req.valid('json'); // Use if not using context
+  const body = c.get("validatedRequestBody");
 
-    const { payload } = body; // Extract the HA-specific payload
-    const env = c.env;
+  const { payload } = body; // Extract the HA-specific payload
+  const env = c.env;
 
-    console.log(
-      `Processing HA request ID: ${body.requestId} for entity: ${payload.entity_id}`
+  console.log(
+    `Processing HA request ID: ${body.requestId} for entity: ${payload.entity_id}`
+  );
+
+  try {
+    const [domain, service] = payload.action.split(".");
+    const result = await callHaService(
+      env.HA_SECURE_URL,
+      env.HA_TOKEN,
+      domain,
+      service,
+      payload.entity_id,
+      payload.data
     );
-
-    try {
-      const [domain, service] = payload.action.split(".");
-      const result = await callHaService(
-        env.HA_SECURE_URL,
-        env.HA_TOKEN,
-        domain,
-        service,
-        payload.entity_id,
-        payload.data
-      );
-      // Return standardized success response
-      return c.json({ success: true, result: result, error: null });
-    } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : String(error || "Failed to call Home Assistant service");
-      console.error(
-        `Error calling Home Assistant for request ID ${body.requestId}:`,
-        error
-      );
-      // Return standardized error response
-      return c.json(
-        {
-          success: false,
-          error: errorMsg,
-          result: null,
-        },
-        500 // Or potentially pass through status code from callHaService if available/relevant
-      );
-    }
+    // Return standardized success response
+    return c.json({ success: true, result: result, error: null });
+  } catch (error: unknown) {
+    const errorMsg =
+      error instanceof Error
+        ? error.message
+        : String(error || "Failed to call Home Assistant service");
+    console.error(
+      `Error calling Home Assistant for request ID ${body.requestId}:`,
+      error
+    );
+    // Return standardized error response
+    return c.json(
+      {
+        success: false,
+        error: errorMsg,
+        result: null,
+      },
+      500 // Or potentially pass through status code from callHaService if available/relevant
+    );
+  }
 }
 
 // --- Hono Route Definition ---
