@@ -11,10 +11,10 @@ mock.module("../src/haService", () => ({
   callHaService: jest.fn(), // Still use jest.fn() for the mock implementation itself
 }));
 
-// Mock the zValidator middleware (might not be strictly needed if bypassing app.fetch, but keep for now)
-mock.module("@hono/zod-validator", () => ({
-  zValidator: jest.fn(() => async (c, next) => await next()), // Simple passthrough middleware
-}));
+// Mock the zValidator middleware
+// mock.module("@hono/zod-validator", () => ({
+//   zValidator: () => async (c: any, next: any) => await next(), // Simple passthrough middleware
+// }));
 
 // Get a reference to the mocked function
 const mockCallHaService = callHaService as jest.Mock;
@@ -78,6 +78,10 @@ describe("Home Assistant Worker", () => {
       put: jest.fn().mockResolvedValue(undefined),
       // Add other methods if needed by middleware (delete, list)
     } as any, // Using 'any' for simplicity
+    REPORT_KV: {
+      put: jest.fn().mockResolvedValue(undefined),
+      get: jest.fn().mockResolvedValue(null),
+    } as any,
     // Ensure all properties of Env are present, even if undefined/mocked
     ...(secrets as Env), // Spread provided secrets, potentially overwriting defaults
   });
