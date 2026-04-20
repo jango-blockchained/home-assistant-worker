@@ -2,11 +2,11 @@
 
 **Last Updated:** April 2026
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Runtime](https://img.shields.io/badge/Runtime-Bun-black?logo=bun)](https://bun.sh) [![Platform](https://img.shields.io/badge/Platform-Cloudflare%20Edge%20Workers-orange?logo=cloudflare)](https://workers.cloudflare.com/) [![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/) [![Build Status](https://img.shields.io/badge/Build-TODO-lightgrey?style=for-the-badge)](https://github.com/jango-blockchained/hoox-setup/actions) 
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Runtime](https://img.shields.io/badge/Runtime-Bun-black?logo=bun)](https://bun.sh) [![Platform](https://img.shields.io/badge/Platform-Cloudflare®%20Edge%20Workers-orange?logo=cloudflare)](https://workers.cloudflare.com/) [![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/) [![Build Status](https://img.shields.io/badge/Build-TODO-lightgrey?style=for-the-badge)](https://github.com/jango-blockchained/hoox-setup/actions) 
 
 **[Main Repository](https://github.com/jango-blockchained/hoox-setup)** 
 
-A Cloudflare Worker service that interacts with the Home Assistant REST API. This worker accepts requests via the standardized `/process` endpoint from the `webhook-receiver` or other authenticated internal services.
+A Cloudflare® Worker service that interacts with the Home Assistant REST API. This worker accepts requests via the standardized `/process` endpoint from the `webhook-receiver` or other authenticated internal services.
 
 ## Features
 
@@ -19,7 +19,7 @@ A Cloudflare Worker service that interacts with the Home Assistant REST API. Thi
 - Node.js >= 16
 - Bun
 - Wrangler CLI
-- Cloudflare Workers account
+- Cloudflare® Workers account
 - Home Assistant instance accessible via URL.
 - Home Assistant Long-Lived Access Token.
 
@@ -29,8 +29,8 @@ A Cloudflare Worker service that interacts with the Home Assistant REST API. Thi
     ```bash
     bun install
     ```
-2.  Set your Cloudflare account ID in `wrangler.jsonc`.
-3.  Configure Secrets and Variables (via Cloudflare dashboard, `wrangler secret put`, or `wrangler.jsonc` for vars):
+2.  Set your Cloudflare® account ID in `wrangler.jsonc`.
+3.  Configure Secrets and Variables (via Cloudflare® dashboard, `wrangler secret put`, or `wrangler.jsonc` for vars):
     - `INTERNAL_KEY_BINDING`: The **shared** secret key used for authentication. Configure using `wrangler secret put INTERNAL_KEY_BINDING`.
     - `HA_SECURE_URL`: The full base URL of your Home Assistant instance (e.g., `https://your-ha.duckdns.org`). Set this as a variable in `wrangler.jsonc` or using `wrangler secret put HA_SECURE_URL`.
     - `HA_TOKEN`: Your Home Assistant Long-Lived Access Token. Set this using `wrangler secret put HA_TOKEN`.
@@ -104,3 +104,7 @@ This worker **only** accepts requests from authenticated internal services (like
     }
   }
   ```
+
+---
+
+*Cloudflare® and the Cloudflare logo are trademarks and/or registered trademarks of Cloudflare, Inc. in the United States and other jurisdictions.*
