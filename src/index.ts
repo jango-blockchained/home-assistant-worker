@@ -38,7 +38,7 @@ const haPayloadSchema = z.object({
   data: z.record(z.unknown()).optional(),
 });
 
-// Schema for the standardized incoming request from the webhook-receiver
+// Schema for the standardized incoming request from the hoox worker
 const standardizedRequestSchema = z.object({
   requestId: z.string().uuid(),
   internalAuthKey: z.string().min(1),

@@ -2,16 +2,16 @@
 
 **Last Updated:** April 2026
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Runtime](https://img.shields.io/badge/Runtime-Bun-black?logo=bun)](https://bun.sh) [![Platform](https://img.shields.io/badge/Platform-Cloudflare®%20Edge%20Workers-orange?logo=cloudflare)](https://workers.cloudflare.com/) [![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/) [![Build Status](https://img.shields.io/badge/Build-TODO-lightgrey?style=for-the-badge)](https://github.com/jango-blockchained/hoox-setup/actions) 
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Runtime](https://img.shields.io/badge/Runtime-Bun-black?logo=bun)](https://bun.sh) [![Platform](https://img.shields.io/badge/Platform-Cloudflare®%20Edge%20Workers-orange?logo=cloudflare)](https://workers.cloudflare.com/) [![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/) [![Build Status](https://github.com/jango-blockchained/hoox-setup/actions/workflows/opencode.yml/badge.svg)](https://github.com/jango-blockchained/hoox-setup/actions/workflows/opencode.yml) 
 
 **[Main Repository](https://github.com/jango-blockchained/hoox-setup)** 
 
-A Cloudflare® Worker service that interacts with the Home Assistant REST API. This worker accepts requests via the standardized `/process` endpoint from the `webhook-receiver` or other authenticated internal services.
+A Cloudflare® Worker service that interacts with the Home Assistant REST API. This worker accepts requests via the standardized `/process` endpoint from the `hoox` or other authenticated internal services.
 
 ## Features
 
 - Calls Home Assistant services (e.g., `light.turn_on`, `script.turn_on`).
-- Secure authentication via shared internal key with `webhook-receiver`.
+- Secure authentication via shared internal key with `hoox`.
 - Uses Home Assistant Long-Lived Access Token for API calls.
 
 ## Prerequisites
@@ -82,7 +82,7 @@ bun run deploy
 
 ## API Interface
 
-This worker **only** accepts requests from authenticated internal services (like `webhook-receiver`) on the `/process` endpoint.
+This worker **only** accepts requests from authenticated internal services (like `hoox`) on the `/process` endpoint.
 
 - **Method:** `POST`
 - **Endpoint:** `/process`
