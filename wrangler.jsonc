@@ -22,13 +22,6 @@
       "id": "c5917667a21745e390ff969f32b1847d"
     }
   ],
-  "secrets_store": {
-    "bindings": [
-      {
-        "binding": "HA_TOKEN_BINDING",
-        "store_id": "48433bc559a943f09d9d6c622e188fd5",
-        "secret_name": "HA_TOKEN"
-      },
       {
         "binding": "HA_SECURE_URL_BINDING",
         "store_id": "48433bc559a943f09d9d6c622e188fd5",
