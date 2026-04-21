@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeEach, jest } from "@jest/globals";
+import { describe, expect, test, beforeEach, jest } from "bun:test";
 // import { Hono } from "hono"; // Don't need full app import for direct handler tests
 import app, { processHaRequest, type Env } from "../src/index"; // Import handler, app (for other tests), and Env type
 import { callHaService } from "../src/haService";
