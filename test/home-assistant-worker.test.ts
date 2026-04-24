@@ -63,15 +63,7 @@ describe("Home Assistant Worker", () => {
   const createMockEnv = (secrets: Partial<Env> = {}): Env => ({
     HA_SECURE_URL: secrets.HA_SECURE_URL ?? TEST_HA_URL,
     HA_TOKEN: secrets.HA_TOKEN ?? TEST_HA_TOKEN,
-    INTERNAL_KEY_BINDING: {
-      get: jest
-        .fn()
-        .mockResolvedValue(
-          secrets.INTERNAL_KEY_BINDING?.get
-            ? secrets.INTERNAL_KEY_BINDING.get()
-            : TEST_INTERNAL_KEY
-        ),
-    },
+    INTERNAL_KEY_BINDING: secrets.INTERNAL_KEY_BINDING ?? TEST_INTERNAL_KEY,
     CONFIG_KV: {
       get: jest.fn().mockResolvedValue(null),
       put: jest.fn().mockResolvedValue(undefined),
@@ -118,7 +110,6 @@ describe("Home Assistant Worker", () => {
     expect(response.status).toBe(403); // Authentication middleware should reject
     const body = await response.json() as any;
     expect(body.error).toBe("Authentication failed");
-    expect(mockEnv.INTERNAL_KEY_BINDING.get).toHaveBeenCalledTimes(1);
     expect(mockCallHaService).not.toHaveBeenCalled();
   });
 
@@ -141,7 +132,6 @@ describe("Home Assistant Worker", () => {
     expect(response.status).toBe(403);
     const body = await response.json() as any;
     expect(body.error).toBe("Authentication failed");
-    expect(mockEnv.INTERNAL_KEY_BINDING.get).toHaveBeenCalledTimes(1);
     expect(mockCallHaService).not.toHaveBeenCalled();
   });
 
@@ -152,7 +142,7 @@ describe("Home Assistant Worker", () => {
     //   },
     // });
     // Instead of creating a new mock function, modify the existing one from the default mockEnv
-    (mockEnv.INTERNAL_KEY_BINDING.get as jest.Mock).mockResolvedValue(null);
+    (mockEnv.INTERNAL_KEY_BINDING as any) = undefined;
 
     const requestPayload = {
       requestId: TEST_REQUEST_ID,
@@ -172,7 +162,6 @@ describe("Home Assistant Worker", () => {
     expect(response.status).toBe(500);
     const body = await response.json() as any;
     expect(body.error).toBe("Internal configuration error");
-    expect(mockEnv.INTERNAL_KEY_BINDING.get).toHaveBeenCalledTimes(1);
     expect(mockCallHaService).not.toHaveBeenCalled();
   });
 

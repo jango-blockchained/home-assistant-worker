@@ -15,9 +15,7 @@ export interface Env extends EnvWithKV {
   // CONFIG_KV is inherited from EnvWithKV
   HA_SECURE_URL: string;
   HA_TOKEN: string;
-  INTERNAL_KEY_BINDING: {
-    get: () => Promise<string | null>; // Define structure for secret binding
-  };
+  INTERNAL_KEY_BINDING: string;
   // Add other bindings if needed
 }
 
@@ -59,7 +57,7 @@ app.use("/process", async (c, next) => {
   try {
     const body = await c.req.json() as { internalAuthKey?: string; requestId?: string };
     const internalAuthKey = body?.internalAuthKey;
-    const storedKey = await c.env.INTERNAL_KEY_BINDING?.get();
+    const storedKey = c.env.INTERNAL_KEY_BINDING;
 
     if (!storedKey) {
       console.error(
