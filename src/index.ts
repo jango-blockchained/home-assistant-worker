@@ -57,7 +57,7 @@ app.use("*", kvTimestampMiddleware());
 
 app.use("/process", async (c, next) => {
   try {
-    const body = await c.req.json();
+    const body = await c.req.json() as { internalAuthKey?: string; requestId?: string };
     const internalAuthKey = body?.internalAuthKey;
     const storedKey = await c.env.INTERNAL_KEY_BINDING?.get();
 
@@ -80,8 +80,7 @@ app.use("/process", async (c, next) => {
     }
 
     // Store the validated body in context to avoid re-parsing (optional but good practice)
-    c.set("validatedRequestBody", body);
-    await next();
+    (c as any).set("validatedRequestBody", body);
   } catch (error) {
     console.error("Error during authentication middleware:", error);
     return c.json(
@@ -93,6 +92,8 @@ app.use("/process", async (c, next) => {
       400
     );
   }
+  
+  return next();
 });
 
 // --- Main Processing Logic (Exported Function) ---
@@ -101,7 +102,7 @@ export async function processHaRequest(
 ): Promise<Response> {
   // Retrieve the body validated by middleware AND Zod
   // const body = c.req.valid('json'); // Use if not using context
-  const body = c.get("validatedRequestBody");
+  const body = (c as any).get("validatedRequestBody") as { requestId: string; payload: { action: string; entity_id: string; data?: Record<string, unknown> } };
 
   const { payload } = body; // Extract the HA-specific payload
   const env = c.env;
@@ -147,28 +148,23 @@ export async function processHaRequest(
 app.post(
   "/process",
   zValidator("json", standardizedRequestSchema, (result, c) => {
-    // Custom error handler for Zod validation
     if (!result.success) {
       console.error(
         "Standardized request validation failed:",
         result.error.issues
       );
-      return c.json(
+      c.json(
         {
           success: false,
           error: "Invalid request body structure.",
-          details: result.error.issues, // Optionally include details
+          details: result.error.issues,
           result: null,
         },
         400
       );
     }
-    // IMPORTANT: If auth middleware stores the body, validation needs it.
-    // If validation runs first, it should put the validated data in context.
-    // Let's assume auth runs first and puts raw body in c.get("validatedRequestBody")
-    // The zValidator hook here might need adjustment depending on exact middleware order
   }),
-  processHaRequest // Use the exported handler function
+  processHaRequest
 );
 
 // Keep a simple health check endpoint (optional)
