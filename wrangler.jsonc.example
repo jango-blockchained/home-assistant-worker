@@ -1,0 +1,36 @@
+{
+  "name": "home-assistant-worker",
+  // ACCOUNT_ID: Get from Cloudflare Dashboard > Overview > Account ID
+  "account_id": "YOUR_ACCOUNT_ID",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-07",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+
+  // OBSERVABILITY: Enable logging and sampling
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+
+  // VARS: Environment variables (secrets set via `wrangler secret put`)
+  "vars": {
+    // HA_SECURE_URL: Home Assistant internal URL (https://)
+    // Set via: wrangler secret put HA_SECURE_URL
+    "HA_SECURE_URL": null,
+    // HA_TOKEN: Long-lived access token for Home Assistant
+    // Set via: wrangler secret put HA_TOKEN
+    "HA_TOKEN": null,
+    // INTERNAL_KEY: Service-to-service authentication
+    "INTERNAL_KEY_BINDING": null
+  },
+
+  // KV_NAMESPACES: Key-Value storage for config
+  "kv_namespaces": [
+    {
+      "binding": "CONFIG_KV",
+      "id": "YOUR_CONFIG_KV_ID"
+    }
+  ]
+}
