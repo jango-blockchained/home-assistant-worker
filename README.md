@@ -2,9 +2,9 @@
 
 **Last Updated:** April 2026
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Runtime](https://img.shields.io/badge/Runtime-Bun-black?logo=bun)](https://bun.sh) [![Platform](https://img.shields.io/badge/Platform-Cloudflare®%20Edge%20Workers-orange?logo=cloudflare)](https://workers.cloudflare.com/) [![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/) [![Build Status](https://github.com/jango-blockchained/hoox-setup/actions/workflows/opencode.yml/badge.svg)](https://github.com/jango-blockchained/hoox-setup/actions/workflows/opencode.yml) 
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Runtime](https://img.shields.io/badge/Runtime-Bun-black?logo=bun)](https://bun.sh) [![Platform](https://img.shields.io/badge/Platform-Cloudflare®%20Edge%20Workers-orange?logo=cloudflare)](https://workers.cloudflare.com/) [![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/) [![Build Status](https://github.com/jango-blockchained/hoox-setup/actions/workflows/opencode.yml/badge.svg)](https://github.com/jango-blockchained/hoox-setup/actions/workflows/opencode.yml)
 
-**[Main Repository](https://github.com/jango-blockchained/hoox-setup)** 
+**[Main Repository](https://github.com/jango-blockchained/hoox-setup)**
 
 A Cloudflare® Worker service that interacts with the Home Assistant REST API. This worker accepts requests via the standardized `/process` endpoint from the `hoox` or other authenticated internal services.
 
@@ -43,17 +43,17 @@ A Cloudflare® Worker service that interacts with the Home Assistant REST API. T
       "compatibility_flags": ["nodejs_compat"],
       "account_id": "YOUR_CLOUDFLARE_ACCOUNT_ID",
       "vars": {
-        "HA_SECURE_URL": "https://your-ha.duckdns.org" // Or null if using secrets
+        "HA_SECURE_URL": "https://your-ha.duckdns.org", // Or null if using secrets
       },
       "secrets": [
         "INTERNAL_KEY_BINDING",
         "HA_TOKEN",
-        "HA_SECURE_URL" // Include here if using secrets instead of vars
+        "HA_SECURE_URL", // Include here if using secrets instead of vars
       ],
       "observability": {
-         "enabled": true,
-         "head_sampling_rate": 1
-      }
+        "enabled": true,
+        "head_sampling_rate": 1,
+      },
     }
     ```
 5.  Update the corresponding `worker-configuration.d.ts` file.
@@ -97,7 +97,8 @@ This worker **only** accepts requests from authenticated internal services (like
       // --- Home Assistant specific payload fields below ---
       "action": "light.turn_on", // Required (HA service call, e.g., "light.turn_off", "script.turn_on")
       "entity_id": "light.living_room", // Required (Target entity ID in HA)
-      "data": { // Optional (Service data, e.g., brightness, rgb_color)
+      "data": {
+        // Optional (Service data, e.g., brightness, rgb_color)
         "brightness": 128,
         "rgb_color": [255, 0, 0]
       }
@@ -107,4 +108,4 @@ This worker **only** accepts requests from authenticated internal services (like
 
 ---
 
-*Cloudflare® and the Cloudflare logo are trademarks and/or registered trademarks of Cloudflare, Inc. in the United States and other jurisdictions.*
+_Cloudflare® and the Cloudflare logo are trademarks and/or registered trademarks of Cloudflare, Inc. in the United States and other jurisdictions._

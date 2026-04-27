@@ -68,7 +68,9 @@ describe("Home Assistant Worker", () => {
       get: jest.fn().mockResolvedValue(null),
       put: jest.fn().mockResolvedValue(undefined),
       delete: jest.fn().mockResolvedValue(undefined),
-      getWithMetadata: jest.fn().mockResolvedValue({ value: null, metadata: null }),
+      getWithMetadata: jest
+        .fn()
+        .mockResolvedValue({ value: null, metadata: null }),
       list: jest.fn().mockResolvedValue({ keys: [] }),
     } as any,
     REPORT_KV: {
@@ -108,7 +110,7 @@ describe("Home Assistant Worker", () => {
 
     const response = await app.fetch(request, mockEnv);
     expect(response.status).toBe(403); // Authentication middleware should reject
-    const body = await response.json() as any;
+    const body = (await response.json()) as any;
     expect(body.error).toBe("Authentication failed");
     expect(mockCallHaService).not.toHaveBeenCalled();
   });
@@ -130,7 +132,7 @@ describe("Home Assistant Worker", () => {
 
     const response = await app.fetch(request, mockEnv);
     expect(response.status).toBe(403);
-    const body = await response.json() as any;
+    const body = (await response.json()) as any;
     expect(body.error).toBe("Authentication failed");
     expect(mockCallHaService).not.toHaveBeenCalled();
   });
@@ -160,7 +162,7 @@ describe("Home Assistant Worker", () => {
 
     const response = await app.fetch(request, mockEnv);
     expect(response.status).toBe(500);
-    const body = await response.json() as any;
+    const body = (await response.json()) as any;
     expect(body.error).toBe("Internal configuration error");
     expect(mockCallHaService).not.toHaveBeenCalled();
   });
@@ -186,7 +188,7 @@ describe("Home Assistant Worker", () => {
     });
     const response = await app.fetch(request, mockEnv);
     expect(response.status).toBe(400);
-    const body = await response.json() as any;
+    const body = (await response.json()) as any;
     expect(body.error).toBe("Invalid request body structure.");
     expect(mockCallHaService).not.toHaveBeenCalled();
   });
@@ -208,7 +210,7 @@ describe("Home Assistant Worker", () => {
     });
     const response = await app.fetch(request, mockEnv);
     expect(response.status).toBe(400);
-    const body = await response.json() as any;
+    const body = (await response.json()) as any;
     expect(body.error).toBe("Invalid request body structure.");
     expect(mockCallHaService).not.toHaveBeenCalled();
   });
@@ -231,7 +233,7 @@ describe("Home Assistant Worker", () => {
     const response = await processHaRequest(mockContext);
 
     expect(response.status).toBe(200);
-    const body = await response.json() as any;
+    const body = (await response.json()) as any;
     expect(body.success).toBe(true);
     expect(body.result).toEqual({ success: true, details: "mock success" });
     expect(body.error).toBeNull();
@@ -263,7 +265,7 @@ describe("Home Assistant Worker", () => {
     const response = await processHaRequest(mockContext);
 
     expect(response.status).toBe(200);
-    const body = await response.json() as any;
+    const body = (await response.json()) as any;
     expect(body.success).toBe(true);
 
     expect(mockCallHaService).toHaveBeenCalledTimes(1);
@@ -296,7 +298,7 @@ describe("Home Assistant Worker", () => {
     const response = await processHaRequest(mockContext);
 
     expect(response.status).toBe(500);
-    const body = await response.json() as any;
+    const body = (await response.json()) as any;
     expect(body.success).toBe(false);
     expect(body.result).toBeNull();
     expect(body.error).toBe(errorMessage);
@@ -330,7 +332,7 @@ describe("Home Assistant Worker", () => {
     const response = await processHaRequest(mockContext);
 
     expect(response.status).toBe(200); // Status should be OK as handler returns success
-    const body = await response.json() as any;
+    const body = (await response.json()) as any;
     expect(body.success).toBe(true);
     expect(body.result).toEqual({ success: true }); // Reflects the handled empty response
     expect(body.error).toBeNull();

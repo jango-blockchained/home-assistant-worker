@@ -55,7 +55,10 @@ app.use("*", kvTimestampMiddleware());
 
 app.use("/process", async (c, next) => {
   try {
-    const body = await c.req.json() as { internalAuthKey?: string; requestId?: string };
+    const body = (await c.req.json()) as {
+      internalAuthKey?: string;
+      requestId?: string;
+    };
     const internalAuthKey = body?.internalAuthKey;
     const storedKey = c.env.INTERNAL_KEY_BINDING;
 
@@ -90,7 +93,7 @@ app.use("/process", async (c, next) => {
       400
     );
   }
-  
+
   return next();
 });
 
@@ -100,7 +103,14 @@ export async function processHaRequest(
 ): Promise<Response> {
   // Retrieve the body validated by middleware AND Zod
   // const body = c.req.valid('json'); // Use if not using context
-  const body = (c as any).get("validatedRequestBody") as { requestId: string; payload: { action: string; entity_id: string; data?: Record<string, unknown> } };
+  const body = (c as any).get("validatedRequestBody") as {
+    requestId: string;
+    payload: {
+      action: string;
+      entity_id: string;
+      data?: Record<string, unknown>;
+    };
+  };
 
   const { payload } = body; // Extract the HA-specific payload
   const env = c.env;
