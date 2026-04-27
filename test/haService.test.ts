@@ -11,7 +11,7 @@ describe("haService", () => {
 
   beforeEach(() => {
     fetchMock = jest.fn();
-    globalThis.fetch = fetchMock;
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
     consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });
